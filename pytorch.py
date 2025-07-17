@@ -1,13 +1,13 @@
 from ultralytics import YOLO
 from ultralytics.nn.tasks import v8DetectionLoss
 import torch
-import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from PIL import Image
 import torchvision.transforms as T
 from dataset import ParkingDataset
-import os 
+import datetime
 
 #should probably switch to more advanced model once we get the training loop working
 model = YOLO('YOLOv8n.pt')
@@ -32,7 +32,7 @@ classes = ('Occupied', 'Vacant')
 
 
 #stochastic gradient descent optimizer
-optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
 loss_fn = v8DetectionLoss()
 
@@ -64,6 +64,17 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
         print(f"box_loss: {loss_items[0]:.4f}, cls_loss: {loss_items[1]:.4f}, dfl_loss: {loss_items[2]:.4f}")
 
     return last_loss
+
+
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+writer = SummaryWriter('runs/parking_trainer_{}'.format(timestamp))
+epoch_number = 0
+
+EPOCHS = 5
+
+best_vloss = 1_000_000.
+
+for epoch in range(EPOCHS): 
 
 
 
