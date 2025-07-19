@@ -11,7 +11,7 @@ from dataset import ParkingDataset
 import datetime as dt
 import os
 
-#stops ultralytics from downloading the cifar10 dataset (for some reason)
+#stops ultralytics from downloading the cifar10 dataset
 SETTINGS['datasets_dir'] = './data'
 
 #should probably switch to more advanced model once we get the training loop working
@@ -34,22 +34,15 @@ train_dataloader = DataLoader(training_set, batch_size = 64, shuffle=True, colla
 valid_dataloader = DataLoader(validation_set, batch_size = 64, shuffle = True, collate_fn = collate)
 classes = ('Occupied', 'Vacant')
 
-hyp = {
-    'box': 0.05,
-    'cls': 0.5,
-    'dfl': 1.5
-}
-loss_fn = v8DetectionLoss(model.model, hyp)
 
 
 #stochastic gradient descent optimizer
 optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
+loss_fn = v8DetectionLoss(model.model)
 
-print("starting training now")
-
-def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_writer):
-
+def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_writer=None):
+    model.train() 
     running_loss = 0
     last_loss = 0
 
@@ -60,19 +53,7 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
 
         outputs = model.model(img)
 
-        targets = torch.cat(labels, dim=0)  # shape: [N, 6]
-        batch_idx = targets[:, 0].long()
-        cls = targets[:, 1].long()
-        bboxes = targets[:, 2:6]
-        batch = {
-            'img': img,
-            'preds': outputs,
-            'batch_idx': batch_idx,
-            'cls': cls,
-            'bboxes': bboxes
-        }
-
-        loss, loss_items = loss_fn(outputs, batch)
+        loss, loss_items = loss_fn({'preds': outputs, 'targets': labels})
         loss.backward()
        
         optimizer.step()
@@ -117,19 +98,7 @@ for epoch in range(EPOCHS):
             valid_inputs, valid_labels = data 
 
             valid_outputs = model.model(valid_inputs)
-            targets = torch.cat(valid_labels, dim=0)
-            batch_idx = targets[:, 0].long()
-            cls = targets[:, 1].long()
-            bboxes = targets[:, 2:6]
-
-            batch = {
-                'img': valid_inputs,
-                'preds': valid_outputs,
-                'batch_idx': batch_idx,
-                'cls': cls,
-                'bboxes': bboxes
-            }
-            valid_loss, valid_loss_items = loss_fn(valid_outputs, batch)
+            valid_loss, valid_loss_items = loss_fn({'preds': valid_outputs, 'targets': valid_labels})
             running_valid_loss += valid_loss.item()
         
         avg_valid_loss = running_valid_loss / (i + 1)
