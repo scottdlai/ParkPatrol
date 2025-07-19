@@ -46,7 +46,7 @@ loss_fn = v8DetectionLoss(model)
 
 def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_writer=None):
     running_loss = 0
-    last_loss = 0
+
 
     print("beginning training")
     for i, data in enumerate(training_loader):
@@ -74,9 +74,9 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
         running_loss += loss
 
         print('  batch {} loss: {}'.format(i + 1, running_loss))
-        tb_x = epoch_index * len(training_loader) + i + 1
-        tb_writer.add_scalar('Loss/train', running_loss, tb_x)
-        running_loss = 0.
+        #tb_x = epoch_index * len(training_loader) + i + 1
+        #tb_writer.add_scalar('Loss/train', running_loss, tb_x)
+
 
         print(f"box_loss: {loss_items[0]:.4f}, cls_loss: {loss_items[1]:.4f}, dfl_loss: {loss_items[2]:.4f}")
         print("training done")
@@ -100,7 +100,7 @@ for epoch in range(EPOCHS):
     model.model.train(True)
     avg_loss = train_one_epoch(epoch_number, train_dataloader, model, optimizer, loss_fn, writer)
 
-    print(f"training loss: {avg_loss:.4f}")
+    print(f"training loss: {avg_loss.item():.4f}")
 
     running_valid_loss = 0.0
 
