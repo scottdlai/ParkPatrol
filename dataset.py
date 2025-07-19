@@ -21,7 +21,7 @@ class ParkingDataset(Dataset):
         label_path = os.path.join(self.label_dir, self.labels[idx])
 
         #open and resize images 
-        img= Image.open(img_path)
+        img= Image.open(img_path).convert("RGB")
         if self.transform:
             img = self.transform(img)
         
@@ -30,7 +30,7 @@ class ParkingDataset(Dataset):
         with open(label_path, 'r') as x:
             for line in x:
                 parts = list(map(float, line.strip().split()))
-                labels.append(parts)
+                labels.append([idx] + parts)
         labels = torch.tensor(labels, dtype=torch.float32)
 
         return img, labels
