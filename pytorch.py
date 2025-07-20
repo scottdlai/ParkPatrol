@@ -5,11 +5,9 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from PIL import Image
 import torchvision.transforms as T
 from dataset import ParkingDataset
 import datetime as dt
-import os
 from types import SimpleNamespace
 
 #stops ultralytics from downloading the cifar10 dataset
@@ -17,6 +15,7 @@ SETTINGS['datasets_dir'] = './data'
 
 #should probably switch to more advanced model once we get the training loop working
 model = YOLO('yolov8n.pt').model.train()
+# weights for the three losses that make up v8detectionloss 
 model.args = SimpleNamespace(box=7.5, cls=0.5, dfl=1.5)
 transform = T.Compose([T.Resize((640, 640)), T.ToTensor()])
 
@@ -45,7 +44,9 @@ optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 loss_fn = v8DetectionLoss(model)
 
 def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_writer=None):
-    running_loss = 0
+    box_loss = 0.0
+    cls_loss = 0.0
+    dfl_loss = 0.0
 
 
     print("beginning training")
@@ -54,7 +55,9 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
         optimizer.zero_grad()
 
         outputs = model(img)
-        batch_dict = {
+
+        # dict format for v8detecionloss input 
+        batch = {
             "batch_idx": targets[:, 0].long(),
             "cls": targets[:, 1].long(),
             "bboxes": targets[:, 2:6]
@@ -62,7 +65,8 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
 
 
         print("calculating loss and optimizing")
-        loss, loss_items = loss_fn(outputs, batch_dict)
+        loss, loss_items = loss_fn(outputs, batch)
+        
         print("calculation complete")
         loss.requires_grad = True
         loss.sum().backward()
@@ -71,17 +75,25 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
         optimizer.step()
         print("fancy optimizer stuff done")
         
-        running_loss += loss
+        
 
-        print('  batch {} loss: {}'.format(i + 1, running_loss))
+        print(f"batch {i+1} loss:")
         #tb_x = epoch_index * len(training_loader) + i + 1
         #tb_writer.add_scalar('Loss/train', running_loss, tb_x)
-
+        box_loss += loss_items[0]
+        cls_loss += loss_items[1]
+        dfl_loss += loss_items[2]
 
         print(f"box_loss: {loss_items[0]:.4f}, cls_loss: {loss_items[1]:.4f}, dfl_loss: {loss_items[2]:.4f}")
         print("training done")
 
-    return running_loss / len(training_loader)
+    box_loss = box_loss / 4
+    cls_loss = cls_loss / 4
+    dfl_loss = dfl_loss / 4
+    print(f"final loss: box_loss: {box_loss:.4f}, cls_loss: {cls_loss:.4f}, dfl_loss: {dfl_loss:.4f}")
+
+    return box_loss, cls_loss, dfl_loss
+
 
 
 timestamp = dt.datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -98,12 +110,14 @@ for epoch in range(EPOCHS):
     print(f'EPOCH {epoch_number + 1}:')
 
     model.model.train(True)
-    avg_loss = train_one_epoch(epoch_number, train_dataloader, model, optimizer, loss_fn, writer)
+    box_loss, cls_loss, dfl_loss = train_one_epoch(epoch_number, train_dataloader, model, optimizer, loss_fn, writer)
+    print("train_one_epoch complete")
 
-    print(f"training loss: {avg_loss.item():.4f}")
+    print(f"box_loss: {box_loss:.4f}, cls_loss: {cls_loss:.4f}, dfl_loss: {dfl_loss:.4f}")
 
     running_valid_loss = 0.0
 
+    # note: validation does not work right now 
     model.model.eval()
 
     with torch.no_grad(): 
@@ -111,12 +125,12 @@ for epoch in range(EPOCHS):
         for i, data in enumerate(valid_dataloader):
             imgs, targets = data
             outputs = model(imgs)
-            batch_dict = {
+            batch = {
             "batch_idx": targets[:, 0].long(),
             "cls": targets[:, 1].long(),
             "bboxes": targets[:, 2:6]
             }
-            valid_loss, valid_loss_items = loss_fn(outputs, batch_dict)
+            valid_loss, valid_loss_items = loss_fn(outputs, batch)
             running_valid_loss += valid_loss.item()
         
         avg_valid_loss = running_valid_loss / (i + 1)
