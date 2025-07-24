@@ -14,7 +14,11 @@ from types import SimpleNamespace
 SETTINGS['datasets_dir'] = './data'
 
 #should probably switch to more advanced model once we get the training loop working
-model = YOLO('yolov8n.pt').model.train()
+model = YOLO('yolov8n.yaml')
+model = YOLO('yolov8n.pt')
+model = YOLO('yolov8n.yaml').load('yolov8n.pt').model.train()
+
+
 # weights for the three losses that make up v8detectionloss 
 model.args = SimpleNamespace(box=7.5, cls=0.5, dfl=1.5)
 transform = T.Compose([T.Resize((640, 640)), T.ToTensor()])
@@ -22,7 +26,6 @@ transform = T.Compose([T.Resize((640, 640)), T.ToTensor()])
 #initialize training and validations sets 
 training_set = ParkingDataset('data/images/train', 'data/labels/train', transform)
 validation_set = ParkingDataset('data/images/val', 'data/labels/val', transform)
-
 #helps determien how many data samples to combine into batch 
 def collate(batch):
     images, labels = zip(*batch)
@@ -33,7 +36,7 @@ def collate(batch):
 
 train_dataloader = DataLoader(training_set, batch_size = 4, shuffle=True, collate_fn=collate)
 valid_dataloader = DataLoader(validation_set, batch_size = 4, shuffle = True, collate_fn = collate)
-classes = ('Occupied', 'Vacant')
+
 
 
 
@@ -68,7 +71,6 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
         loss, loss_items = loss_fn(outputs, batch)
         
         print("calculation complete")
-        loss.requires_grad = True
         loss.sum().backward()
         print("backward calculation complete")
         print("doing fancy optimizer stuff")
@@ -87,9 +89,9 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
         print(f"box_loss: {loss_items[0]:.4f}, cls_loss: {loss_items[1]:.4f}, dfl_loss: {loss_items[2]:.4f}")
         print("training done")
 
-    box_loss = box_loss / 4
-    cls_loss = cls_loss / 4
-    dfl_loss = dfl_loss / 4
+    box_loss = box_loss / (i + 1)
+    cls_loss = cls_loss / (i + 1)
+    dfl_loss = dfl_loss / (i + 1)
     print(f"final loss: box_loss: {box_loss:.4f}, cls_loss: {cls_loss:.4f}, dfl_loss: {dfl_loss:.4f}")
 
     return box_loss, cls_loss, dfl_loss
@@ -102,21 +104,24 @@ writer = SummaryWriter('runs/parking_trainer_{}'.format(timestamp))
 epoch_number = 0
 epoch_best = 0
 
-EPOCHS = 5
+EPOCHS = 50
 best_valid_loss = float('inf')
 
 #training loop 
 for epoch in range(EPOCHS): 
+    v_box_loss = 0.0
+    v_cls_loss = 0.0
+    v_dfl_loss = 0.0
+    
     print(f'EPOCH {epoch_number + 1}:')
 
     model.model.train(True)
-    box_loss, cls_loss, dfl_loss = train_one_epoch(epoch_number, train_dataloader, model, optimizer, loss_fn, writer)
+    box_loss, cls_loss, dfl_loss = train_one_epoch(epoch_number, train_dataloader, model, optimizer, loss_fn, None)
     print("train_one_epoch complete")
 
     print(f"box_loss: {box_loss:.4f}, cls_loss: {cls_loss:.4f}, dfl_loss: {dfl_loss:.4f}")
 
-    running_valid_loss = 0.0
-
+    training_loss = box_loss + cls_loss + dfl_loss
     # note: validation does not work right now 
     model.model.eval()
 
@@ -130,32 +135,36 @@ for epoch in range(EPOCHS):
             "cls": targets[:, 1].long(),
             "bboxes": targets[:, 2:6]
             }
-            valid_loss, valid_loss_items = loss_fn(outputs, batch)
-            running_valid_loss += valid_loss.item()
+            v_loss, v_loss_items = loss_fn(outputs, batch)
         
-        avg_valid_loss = running_valid_loss / (i + 1)
+            v_box_loss += v_loss_items[0]
+            v_cls_loss += v_loss_items[1]
+            v_dfl_loss += v_loss_items[2]  
 
-        print(f"validation loss: {valid_loss:.4f}")
-        print(f"box_loss: {valid_loss_items[0]:.4f}, cls_loss: {valid_loss_items[1]:.4f}, dfl_loss: {valid_loss_items[2]:.4f}")
-        print(f"average validation loss: {avg_valid_loss:.4f}")
+            print(f"box_loss: {v_loss_items[0]:.4f}, cls_loss: {v_loss_items[1]:.4f}, dfl_loss: {v_loss_items[2]:.4f}")
 
+        v_box_loss = v_box_loss / (i + 1) 
+        v_cls_loss = v_cls_loss / (i + 1)
+        v_dfl_loss = v_dfl_loss / (i + 1)
 
+        v_loss = v_box_loss + v_cls_loss + v_dfl_loss
 
-        writer.add_scalars('Training vs. Validation Loss',
-            { 'Training' : avg_loss, 'Validation' : avg_valid_loss },
-            epoch_number + 1)
-        writer.flush()
+        print("validation done")
+
 
         # save the best reults 
-        if avg_valid_loss < best_valid_loss:
-            best_valid_loss = avg_valid_loss
+        if v_loss < best_valid_loss:
+            best_valid_loss = v_loss
             epoch_best = epoch_number
-            model_path = "best/parking_trainer_{}/model_best.pt".format(timestamp_initial)
-            torch.save(model.model.state_dict(), model_path)
+            model_path = "runs/parking_trainer_{}/model_best.pt".format(timestamp_initial)
+            model.save(model_path)
 
         epoch_number += 1
 
 
-print("training and validation done, model saved to best/parking_trainer_{}/model_best.pt".format(timestamp_initial))
+print("training and validation done, model saved to runs/parking_trainer_{}/model_best.pt".format(timestamp_initial))
 
+# testing 
+model = YOLO("runs/parking_trainer_{}/model_best.pt".format(timestamp_initial))
 
+results = model.predict(source="data/images/val", save=True, conf=0.25)
