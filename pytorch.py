@@ -10,14 +10,13 @@ from dataset import ParkingDataset
 import datetime as dt
 from types import SimpleNamespace
 
+
 #stops ultralytics from downloading the cifar10 dataset
 SETTINGS['datasets_dir'] = './data'
 
-#should probably switch to more advanced model once we get the training loop working
-model = YOLO('yolov8n.yaml')
-model = YOLO('yolov8n.pt')
-model = YOLO('yolov8n.yaml').load('yolov8n.pt').model.train()
-
+#originally created with model.train() from ultralytics
+yolo = YOLO('parking.pt')
+model = yolo.model.train()
 
 # weights for the three losses that make up v8detectionloss 
 model.args = SimpleNamespace(box=7.5, cls=0.5, dfl=1.5)
@@ -33,15 +32,17 @@ def collate(batch):
     labels = torch.cat(labels, dim=0)
     return images, labels
 
+TRAIN_BATCH_SIZE = 8
+VAL_BATCH_SIZE = 3
 
-train_dataloader = DataLoader(training_set, batch_size = 4, shuffle=True, collate_fn=collate)
-valid_dataloader = DataLoader(validation_set, batch_size = 4, shuffle = True, collate_fn = collate)
+train_dataloader = DataLoader(training_set, TRAIN_BATCH_SIZE, shuffle=True, collate_fn=collate)
+valid_dataloader = DataLoader(validation_set, VAL_BATCH_SIZE, shuffle = True, collate_fn = collate)
 
 
 
 
-#stochastic gradient descent optimizer
-optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+# AdamW optimizer
+optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=5e-4)
 
 
 loss_fn = v8DetectionLoss(model)
@@ -59,6 +60,7 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
 
         outputs = model(img)
 
+
         # dict format for v8detecionloss input 
         batch = {
             "batch_idx": targets[:, 0].long(),
@@ -69,7 +71,7 @@ def train_one_epoch(epoch_index, training_loader, model, optimizer, loss_fn, tb_
 
         print("calculating loss and optimizing")
         loss, loss_items = loss_fn(outputs, batch)
-        
+        loss.requires_grad = True
         print("calculation complete")
         loss.sum().backward()
         print("backward calculation complete")
@@ -115,7 +117,7 @@ for epoch in range(EPOCHS):
     
     print(f'EPOCH {epoch_number + 1}:')
 
-    model.model.train(True)
+    model.train(True)
     box_loss, cls_loss, dfl_loss = train_one_epoch(epoch_number, train_dataloader, model, optimizer, loss_fn, None)
     print("train_one_epoch complete")
 
@@ -123,7 +125,7 @@ for epoch in range(EPOCHS):
 
     training_loss = box_loss + cls_loss + dfl_loss
     # note: validation does not work right now 
-    model.model.eval()
+    model.eval()
 
     with torch.no_grad(): 
         print("beginning validation")
@@ -157,14 +159,16 @@ for epoch in range(EPOCHS):
             best_valid_loss = v_loss
             epoch_best = epoch_number
             model_path = "runs/parking_trainer_{}/model_best.pt".format(timestamp_initial)
-            model.save(model_path)
-
+            yolo.save(model_path)
+            yolo.save("model_best.pt")
+            print("v_loss was less than best_valid_loss")
+            print(f"new best model at epoch {epoch_number + 1}")
+        else:
+            print("v_loss was not less than best_valid_loss")
+        
+        print(f"v_loss: {v_loss:.4f} | best_valid_loss: {best_valid_loss:.4f}")
+        print(f"best epoch: {epoch_best + 1}\n")
         epoch_number += 1
-
+ 
 
 print("training and validation done, model saved to runs/parking_trainer_{}/model_best.pt".format(timestamp_initial))
-
-# testing 
-model = YOLO("runs/parking_trainer_{}/model_best.pt".format(timestamp_initial))
-
-results = model.predict(source="data/images/val", save=True, conf=0.25)
