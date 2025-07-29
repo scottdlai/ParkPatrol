@@ -26,10 +26,10 @@ model.args = SimpleNamespace(box=7.5, cls=0.5, dfl=1.5)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 transform = T.Compose([T.Resize((640, 640)), T.ToTensor()])
 
-#initialize training and validations sets 
+#initialize training and validations sets
 training_set = ParkingDataset('data/images/train', 'data/labels/train', transform)
 validation_set = ParkingDataset('data/images/val', 'data/labels/val', transform)
-#helps determien how many data samples to combine into batch 
+#helps determien how many data samples to combine into batch
 def collate(batch):
     images, labels = zip(*batch)
     images = torch.stack(images, dim=0)
@@ -88,8 +88,8 @@ def train_one_epoch(loader, model, optimizer, loss_fn):
         print("doing fancy optimizer stuff")
         optimizer.step()
         print("fancy optimizer stuff done")
-        
-        
+
+
 
         print(f"batch {i} loss:")
         #tb_x = epoch_index * len(training_loader) + i + 1
