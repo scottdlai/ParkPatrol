@@ -41,7 +41,7 @@ def collate(batch):
     labels = torch.cat(updated_labels, dim=0)
     return images, labels
 
-TRAIN_BATCH_SIZE = 8
+TRAIN_BATCH_SIZE = 4
 VAL_BATCH_SIZE = 3
 
 train_dataloader = DataLoader(training_set, TRAIN_BATCH_SIZE, shuffle=True, collate_fn=collate)
@@ -57,7 +57,6 @@ model.to(device)
 
 def train_one_epoch(loader, model, optimizer, loss_fn):
     model.train()
-    print("beginning training")
     box = 0.0
     cls = 0.0
     dfl = 0.0
@@ -77,35 +76,29 @@ def train_one_epoch(loader, model, optimizer, loss_fn):
             "bboxes": targets[:, 2:6]
         }
 
-        print("calculating loss and optimizing")
         loss, loss_items = loss_fn(outputs, batch)
         total_loss = loss[0] + loss[1] + loss[2]
-        print(f'loss: {loss}')
-        print(f'loss_items: {loss_items}')
-        print("calculation complete")
+
         total_loss.backward()
-        print("backward calculation complete")
-        print("doing fancy optimizer stuff")
+
         optimizer.step()
-        print("fancy optimizer stuff done")
-        
+
         
 
-        print(f"batch {i} loss:")
+        #print(f"batch {i} loss:")
         #tb_x = epoch_index * len(training_loader) + i + 1
         #tb_writer.add_scalar('Loss/train', running_loss, tb_x)
         box += loss_items[0]
         cls += loss_items[1]
         dfl += loss_items[2]
 
-        print(f"box: {loss_items[0]:.4f}, cls: {loss_items[1]:.4f}, dfl: {loss_items[2]:.4f}")
-        print("training done")
+       # print(f"box: {loss_items[0]:.4f}, cls: {loss_items[1]:.4f}, dfl: {loss_items[2]:.4f}")
         i += 1
 
     box = box / len(loader)
     cls = cls / len(loader)
     dfl = dfl / len(loader)
-    print(f"final training loss: box: {box:.4f}, cls: {cls:.4f}, dfl: {dfl:.4f}")
+   # print(f"final training loss: box: {box:.4f}, cls: {cls:.4f}, dfl: {dfl:.4f}")
     return box, cls, dfl
 
 def validate(loader, model, loss_fn):
@@ -132,18 +125,21 @@ def validate(loader, model, loss_fn):
         box = box / len(loader)
         cls = cls / len(loader)
         dfl = dfl / len(loader)
-        print(f"final training loss: box: {box:.4f}, cls: {cls:.4f}, dfl: {dfl:.4f}")
+      #  print(f"final training loss: box: {box:.4f}, cls: {cls:.4f}, dfl: {dfl:.4f}")
         return box, cls, dfl
 
 timestamp = dt.datetime.now().strftime('%Y%m%d_%H%M%S')
 timestamp_initial = timestamp
 writer = SummaryWriter('runs/parking_trainer_{}'.format(timestamp))
-EPOCHS = 50
+EPOCHS = 200
 best_valid_loss = float('inf')
+patience = 0
 
 #training + validation loop 
 for epoch in range(EPOCHS): 
-
+    if patience > 10:
+        print("Model not improving, ending training loop")
+        break
     # call the functions 
     t_box, t_cls, t_dfl = train_one_epoch(train_dataloader, model, optimizer, loss_fn)
     v_box, v_cls, v_dfl = validate(valid_dataloader, model, loss_fn)
@@ -163,18 +159,20 @@ for epoch in range(EPOCHS):
     writer.add_scalar('Loss/val/dfl', v_dfl, epoch)
     
     writer.add_scalar('Loss/train', t_loss, epoch)
-    writer.add_scalar('Loss/val',   v_loss,   epoch)
+    writer.add_scalar('Loss/val', v_loss, epoch)
 
-    print(f"Loss values for epoch {epoch+1}:")
-
-    print(f"Training: [box = {t_box}, cls = {t_cls}, val = {t_dfl}] | Validation: [box = {v_box}, cls = {v_cls}, dfl = {v_dfl}]\n")
+    print(f"Loss values for epoch {epoch+1}: Training: [box = {t_box:.4f}, cls = {t_cls:.4f}, dfl = {t_dfl:.4f}] | Validation: [box = {v_box:.4f}, cls = {v_cls:.4f}, dfl = {v_dfl:.4f}]\n")
 
     if v_loss < best_valid_loss: 
         best_valid_loss = v_loss
         torch.save(model.state_dict(), f'runs/parking_trainer_{timestamp}/model_best.pt')
+        patience = 0
+
+    else:
+        patience += 1
  
 # reconstruct yolo modelb and save it
 yolo.model = model
-yolo.save("model.pt")
+yolo.save("model_v2.pt")
 
 print("Training and validation done, model saved to runs/parking_trainer_{}/model_best.pt".format(timestamp_initial))
