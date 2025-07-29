@@ -30,7 +30,7 @@ export default function App() {
 
     try {
       // TODO replace api path with actual url
-      const response = await fetch('api-path', {
+      const response = await fetch('localhost:8000/api/predict', {
         method: 'POST',
         body: formData,
       });
