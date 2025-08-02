@@ -13,9 +13,11 @@ PORT = 8000
 
 
 def predict(img: Image.Image) -> float:
-    img_np = np.array(img)
+    # img_np = np.array(img)
 
-    results = model.predict(source=img_np, save=True, show_labels=False, show_conf=False, conf=0.60)
+    results = model(img)
+
+    # results = model.predict(source=img_np, save=True, show_labels=False, show_conf=False, conf=0.60)
 
     print(f'Results: ${results[0]}')
 
