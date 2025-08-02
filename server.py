@@ -1,30 +1,45 @@
 import cgi
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
+import base64
 import json
-# import numpy as np
 
-from PIL import Image
+from PIL import Image, ImageDraw
 from ultralytics import YOLO
 
 
-model = YOLO('model_v2.pt')
+model = YOLO('model.pt')
 PORT = 8000
+UNOCCUPIED_CLASS_ID = 1
 
+def predict(img: Image.Image) -> tuple[float, Image.Image]:
+    results = model.predict(
+        source=img,
+        conf=0.6,
+        show=False,
+        save=False,
+        show_labels=False,
+        show_conf=False,
+        verbose=False
+    )
 
-def predict(img: Image.Image) -> float:
-    # img_np = np.array(img)
+    boxes = results[0].boxes
+    probs = [float(box.conf) for box in boxes]
+    occupied_prob = sum(probs) / len(probs) if probs else 0.0
 
-    results = model(img)
+    annotated_img = img.copy()
+    draw = ImageDraw.Draw(annotated_img)
 
-    # results = model.predict(source=img_np, save=True, show_labels=False, show_conf=False, conf=0.60)
+    for box in boxes:
+        cls_id = int(box.cls[0])
+        if cls_id == UNOCCUPIED_CLASS_ID:
+            xyxy = box.xyxy[0].tolist()
+            draw.rectangle(xyxy, outline="green", width=9)
+        else:
+            xyxy = box.xyxy[0].tolist()
+            draw.rectangle(xyxy, outline="red", width=3)
 
-    print(f'Results: ${results[0]}')
-
-    probs = [float(box.conf) for box in results[0].boxes]
-    occupied_prob = max(probs) if probs else 0.0
-
-    return occupied_prob
+    return occupied_prob, annotated_img
 
 
 class ParkPatrolHandler(BaseHTTPRequestHandler):
@@ -64,16 +79,25 @@ class ParkPatrolHandler(BaseHTTPRequestHandler):
 
             print(f'Calling API with img {img}')
 
-            probability = predict(img)
+            (probability, annotated_img) = predict(img)
 
             print(f'Occupied Probability: {probability}')
+
+            # Convert image to base64-encoded PNG
+            buf = BytesIO()
+            annotated_img.save(buf, format='PNG')
+            img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            data_url = f"data:image/png;base64,{img_base64}"
+
+            response = {
+                'occupiedProbability': probability,
+                'img': data_url
+            }
 
             self.send_response(200)
             self._cors()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-
-            response = {'occupiedProbability': probability}
             self.wfile.write(json.dumps(response).encode())
 
         except Exception as e:

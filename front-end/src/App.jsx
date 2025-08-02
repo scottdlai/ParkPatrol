@@ -5,92 +5,94 @@ import React, { useState } from 'react';
 const API_URL = 'http://localhost:8000/api/predict';
 
 export default function App() {
-  const [file, setFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  // in [0, 1]
-  const [prediction, setPrediction] = useState(null);
-  const [loading, setLoading] = useState(false);
+    const [file, setFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    // in [0, 1]
+    const [prediction, setPrediction] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setImagePreview(URL.createObjectURL(selectedFile));
-      setPrediction(null);
-    }
-  };
+    const handleFileChange = (e) => {
+        const selectedFile = e.target.files[0];
+        if (selectedFile) {
+            setFile(selectedFile);
+            setImagePreview(URL.createObjectURL(selectedFile));
+            setPrediction(null);
+        }
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!file) {
-      return;
-    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!file) {
+            return;
+        }
 
-    setLoading(true);
-    const formData = new FormData();
-    formData.append('image', file);
+        setLoading(true);
+        const formData = new FormData();
+        formData.append('image', file);
 
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        body: formData,
-      });
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: formData,
+            });
 
-      const data = await response.json();
-      setPrediction(data.occupiedProbability);
-    } catch (err) {
-      console.error('Prediction failed', err);
-      setPrediction('Error');
-    } finally {
-      setLoading(false);
-    }
-  };
+            const data = await response.json();
 
-  return (
-    <div className="flex justify-center items-center h-screen w-screen bg-zinc-50">
-      <div className="align-super w-md min-h-80 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white">
-        <h1 className="text-xl font-bold text-center">Paw Patrol</h1>
+            setPrediction(data.occupiedProbability);
+            setImagePreview(data.img);
+        } catch (err) {
+            console.error('Prediction failed', err);
+            setPrediction('Error');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            id="file-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
+    return (
+        <div className="flex justify-center items-center h-screen w-screen bg-zinc-50">
+            <div className="align-super w-md min-h-80 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white">
+                <h1 className="text-xl font-bold text-center">Paw Patrol</h1>
 
-          <label
-            htmlFor="file-upload"
-            className="block w-full px-4 py-2 text-center bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200 font-medium"
-          >
-            {file ? 'Change Image' : 'Upload Image'}
-          </label>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                        id="file-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                    />
 
-          {imagePreview && (
-            <img
-              src={imagePreview}
-              alt="Selected"
-              className="w-full h-auto rounded shadow"
-            />
-          )}
+                    <label
+                        htmlFor="file-upload"
+                        className="block w-full px-4 py-2 text-center bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200 font-medium"
+                    >
+                        {file ? 'Change Image' : 'Upload Image'}
+                    </label>
 
-          <button
-            type="submit"
-            disabled={loading || !file}
-            className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700"
-          >
-            {loading ? 'Analyzing...' : 'Submit'}
-          </button>
-        </form>
+                    {imagePreview && (
+                        <img
+                            src={imagePreview}
+                            alt="Selected"
+                            className="w-full h-auto rounded shadow"
+                        />
+                    )}
 
-        {prediction !== null && (
-          <div className="text-center text-lg">
-            Probability occupied:{' '}
-            <strong>{(prediction * 100).toFixed(2)}%</strong>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+                    <button
+                        type="submit"
+                        disabled={loading || !file}
+                        className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700"
+                    >
+                        {loading ? 'Analyzing...' : 'Submit'}
+                    </button>
+                </form>
+
+                {/* {prediction !== null && ( */}
+                {/*     <div className="text-center text-lg"> */}
+                {/*         Probability occupied:{' '} */}
+                {/*         <strong>{(prediction * 100).toFixed(2)}%</strong> */}
+                {/*     </div> */}
+                {/* )} */}
+            </div>
+        </div>
+    );
 }
