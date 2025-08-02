@@ -2,6 +2,8 @@ import './App.css';
 
 import React, { useState } from 'react';
 
+const API_URL = 'http://localhost:8000/api/predict';
+
 export default function App() {
   const [file, setFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -29,8 +31,7 @@ export default function App() {
     formData.append('image', file);
 
     try {
-      // TODO replace api path with actual url
-      const response = await fetch('localhost:8000/api/predict', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         body: formData,
       });
@@ -47,7 +48,7 @@ export default function App() {
 
   return (
     <div className="flex justify-center items-center h-screen w-screen bg-zinc-50">
-      <div className="align-super w-md h-80 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white">
+      <div className="align-super w-md min-h-80 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white">
         <h1 className="text-xl font-bold text-center">Paw Patrol</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -86,7 +87,7 @@ export default function App() {
         {prediction !== null && (
           <div className="text-center text-lg">
             Probability occupied:{' '}
-            <strong>{(prediction * 100).toFixed(1)}%</strong>
+            <strong>{(prediction * 100).toFixed(2)}%</strong>
           </div>
         )}
       </div>
