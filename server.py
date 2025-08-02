@@ -2,7 +2,7 @@ import cgi
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 import json
-import numpy as np
+# import numpy as np
 
 from PIL import Image
 from ultralytics import YOLO
