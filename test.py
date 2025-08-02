@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
 
-model = YOLO('model_v2.pt')
+model = YOLO('models_trained/modelv8s.pt')
 
 # test images are currently the same as validation images, will add dedicated testing images once more data is created
 # conf = minimum confidence for model to classify an object

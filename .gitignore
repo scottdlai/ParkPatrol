@@ -1,2 +1,4 @@
-__pychache__/
+__pycache__
 rename_pairs.py
+tensorboard
+setup.py
