@@ -49,7 +49,7 @@ export default function App() {
     };
 
     return (
-        <div className="flex justify-center items-center h-screen w-screen bg-zinc-50">
+        <div className="flex justify-center items-center min-h-screen w-screen bg-zinc-50">
             <div className="align-super w-md min-h-80 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white">
                 <h1 className="text-xl font-bold text-center">Paw Patrol</h1>
 

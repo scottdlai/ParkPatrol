@@ -8,14 +8,14 @@ from PIL import Image, ImageDraw
 from ultralytics import YOLO
 
 
-model = YOLO('model.pt')
+model = YOLO('models/parkingv8s.pt')
 PORT = 8000
 UNOCCUPIED_CLASS_ID = 1
 
 def predict(img: Image.Image) -> tuple[float, Image.Image]:
     results = model.predict(
         source=img,
-        conf=0.6,
+        conf=0.75,
         show=False,
         save=False,
         show_labels=False,
@@ -34,7 +34,7 @@ def predict(img: Image.Image) -> tuple[float, Image.Image]:
         cls_id = int(box.cls[0])
         if cls_id == UNOCCUPIED_CLASS_ID:
             xyxy = box.xyxy[0].tolist()
-            draw.rectangle(xyxy, outline="green", width=9)
+            draw.rectangle(xyxy, outline="green", width=3)
         else:
             xyxy = box.xyxy[0].tolist()
             draw.rectangle(xyxy, outline="red", width=3)
