@@ -16,7 +16,7 @@ from types import SimpleNamespace
 SETTINGS['datasets_dir'] = './data'
 
 #originally created with model.train() from ultralytics
-yolo = YOLO('models/parkingv8s.pt')
+yolo = YOLO('models/parkingv8m.pt')
 model = yolo.model.train()
 
 for name, param in model.named_parameters():
@@ -84,8 +84,6 @@ def train_one_epoch(loader, model, optimizer, loss_fn):
 
         optimizer.step()
 
-        
-
         #print(f"batch {i} loss:")
         #tb_x = epoch_index * len(training_loader) + i + 1
         #tb_writer.add_scalar('Loss/train', running_loss, tb_x)
@@ -132,7 +130,7 @@ def validate(loader, model, loss_fn):
 timestamp = dt.datetime.now().strftime('%Y%m%d_%H%M%S')
 writer = SummaryWriter('runs/parking_trainer_{}'.format(timestamp))
 
-EPOCHS = 200
+EPOCHS = 500
 
 best_valid_loss = float('inf')
 patience = 0
@@ -167,7 +165,6 @@ for epoch in range(EPOCHS):
 
     if v_loss < best_valid_loss: 
         best_valid_loss = v_loss
-        torch.save(model.state_dict(), f'runs/parking_trainer_{timestamp}/model_best.pt')
         patience = 0
         print("v_loss less than best_valid loss")
         print(f"Patience: {patience}")
@@ -178,6 +175,7 @@ for epoch in range(EPOCHS):
  
 # reconstruct yolo modelb and save it
 yolo.model = model
-yolo.save("models_trained/modelv8s.pt")
+yolo.save("models_trained/modelv8m.pt")
 
-print("Training and validation done, model saved to runs/parking_trainer_{}/model_best.pt".format(timestamp))
+print("Training and validation done, model loss values saved to runs/parking_trainer_{}".format(timestamp))
+print("Model saved as models_trained/modelv8m.pt")
