@@ -15,7 +15,7 @@ UNOCCUPIED_CLASS_ID = 1
 def predict(img: Image.Image) -> tuple[float, Image.Image]:
     results = model.predict(
         source=img,
-        conf=0.75,
+        conf=0.60,
         show=False,
         save=False,
         show_labels=False,
