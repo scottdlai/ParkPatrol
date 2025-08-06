@@ -1,5 +1,4 @@
 from ultralytics import YOLO
-import torch
 
 
 model = YOLO('models_trained/modelv8m.pt')
