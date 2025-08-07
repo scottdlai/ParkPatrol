@@ -8,15 +8,22 @@ export default function App() {
     const [file, setFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     // in [0, 1]
-    const [prediction, setPrediction] = useState(null);
+    // const [prediction, setPrediction] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    const [spots, setSpots] = useState(null);
+    const [vacants, setVacants] = useState(null);
+    const [occupieds, setOccupieds] = useState(null);
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
             setFile(selectedFile);
             setImagePreview(URL.createObjectURL(selectedFile));
-            setPrediction(null);
+            // setPrediction(null);
+            setSpots(null);
+            setVacants(null);
+            setOccupieds(null);
         }
     };
 
@@ -38,11 +45,17 @@ export default function App() {
 
             const data = await response.json();
 
-            setPrediction(data.occupiedProbability);
+            console.log(data);
+
             setImagePreview(data.img);
+            setSpots(data.stats?.spots);
+            setVacants(data.stats?.vacants);
+            setOccupieds(data.stats?.occupieds);
         } catch (err) {
             console.error('Prediction failed', err);
-            setPrediction('Error');
+            setSpots(null);
+            setVacants(null);
+            setOccupieds(null);
         } finally {
             setLoading(false);
         }
@@ -50,7 +63,7 @@ export default function App() {
 
     return (
         <div className="flex justify-center items-center min-h-screen w-screen bg-zinc-50">
-            <div className="align-super w-md min-h-80 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white">
+            <div className="align-super w-1/2 min-h-80 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white">
                 <h1 className="text-xl font-bold text-center">Paw Patrol</h1>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -86,12 +99,23 @@ export default function App() {
                     </button>
                 </form>
 
-                {/* {prediction !== null && ( */}
-                {/*     <div className="text-center text-lg"> */}
-                {/*         Probability occupied:{' '} */}
-                {/*         <strong>{(prediction * 100).toFixed(2)}%</strong> */}
-                {/*     </div> */}
-                {/* )} */}
+                {spots !== null && (
+                    <div className="text-center text-lg">
+                        Number of spots: {spots}
+                    </div>
+                )}
+
+                {vacants !== null && (
+                    <div className="text-center text-lg">
+                        Number of vacants: {vacants}
+                    </div>
+                )}
+
+                {occupieds !== null && (
+                    <div className="text-center text-lg">
+                        Number of occupieds: {occupieds}
+                    </div>
+                )}
             </div>
         </div>
     );

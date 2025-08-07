@@ -3,8 +3,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 import base64
 import json
+from os import stat
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from ultralytics import YOLO
 
 
@@ -30,16 +31,36 @@ def predict(img: Image.Image) -> tuple[float, Image.Image]:
     annotated_img = img.copy()
     draw = ImageDraw.Draw(annotated_img)
 
+    spots = len(boxes)
+    occupieds = 0
+    vacants = 0
+
+    draw = ImageDraw.Draw(annotated_img)
+
+    try:
+        font = ImageFont.truetype("arial.ttf", size=96)
+    except:
+        font = ImageFont.load_default(size=96)
+
     for box in boxes:
         cls_id = int(box.cls[0])
-        if cls_id == UNOCCUPIED_CLASS_ID:
-            xyxy = box.xyxy[0].tolist()
-            draw.rectangle(xyxy, outline="green", width=3)
-        else:
-            xyxy = box.xyxy[0].tolist()
-            draw.rectangle(xyxy, outline="red", width=3)
+        conf = float(box.conf[0])
+        label = f"{conf:.2f}"
 
-    return occupied_prob, annotated_img
+        xyxy = box.xyxy[0].tolist()  # [x1, y1, x2, y2]
+
+        if cls_id == UNOCCUPIED_CLASS_ID:
+            draw.rectangle(xyxy, outline="green", width=3)
+            draw.text((xyxy[0], xyxy[1] - 15), label, fill="green", font=font)
+            vacants += 1
+        else:
+            draw.rectangle(xyxy, outline="red", width=3)
+            draw.text((xyxy[0], xyxy[1] - 15), label, fill="red", font=font)
+            occupieds += 1
+
+    stats = { "spots": spots, "vacants": vacants, "occupieds": occupieds }
+
+    return (occupied_prob, annotated_img, stats)
 
 
 class ParkPatrolHandler(BaseHTTPRequestHandler):
@@ -79,7 +100,7 @@ class ParkPatrolHandler(BaseHTTPRequestHandler):
 
             print(f'Calling API with img {img}')
 
-            (probability, annotated_img) = predict(img)
+            (probability, annotated_img, stats) = predict(img)
 
             print(f'Occupied Probability: {probability}')
 
@@ -91,7 +112,8 @@ class ParkPatrolHandler(BaseHTTPRequestHandler):
 
             response = {
                 'occupiedProbability': probability,
-                'img': data_url
+                'img': data_url,
+                'stats': stats,
             }
 
             self.send_response(200)
