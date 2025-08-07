@@ -3,7 +3,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 import base64
 import json
-from os import stat
 
 from PIL import Image, ImageDraw, ImageFont
 from ultralytics import YOLO
