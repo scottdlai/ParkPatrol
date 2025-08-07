@@ -38,8 +38,10 @@ def predict(img: Image.Image) -> tuple[float, Image.Image]:
 
     try:
         font = ImageFont.truetype("arial.ttf", size=96)
+        print("im here")
     except:
-        font = ImageFont.load_default(size=96)
+        font = ImageFont.load_default(size=48)
+        print("im except")
 
     for box in boxes:
         cls_id = int(box.cls[0])
