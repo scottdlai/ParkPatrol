@@ -49,7 +49,7 @@ VAL_BATCH_SIZE = 4
 train_dataloader = DataLoader(training_set, TRAIN_BATCH_SIZE, shuffle=True, collate_fn=collate)
 valid_dataloader = DataLoader(validation_set, VAL_BATCH_SIZE, shuffle = True, collate_fn = collate)
 
-# AdamW optimizer
+# SGD optimizer
 optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
 loss_fn = v8DetectionLoss(model)
