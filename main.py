@@ -22,16 +22,16 @@ model = yolo.model.train()
 for name, param in model.named_parameters():
     param.requires_grad = True
 
-# weights for the three losses that make up v8detectionloss 
+# weights for the three losses that make up v8detectionloss
 model.args = SimpleNamespace(box=7.5, cls=0.5, dfl=1.5)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 transform = T.Compose([T.Resize((640, 640)), T.ToTensor()])
 
-#initialize training and validations sets 
+#initialize training and validations sets
 training_set = ParkingDataset('data/images/train', 'data/labels/train', transform)
 validation_set = ParkingDataset('data/images/val', 'data/labels/val', transform)
 
-#helps determien how many data samples to combine into batch 
+#helps determien how many data samples to combine into batch
 def collate(batch):
     images, labels = zip(*batch)
     images = torch.stack(images, dim=0)
@@ -63,14 +63,14 @@ def train_one_epoch(loader, model, optimizer, loss_fn):
     dfl = 0.0
     i = 1
     for img, targets in loader:
-        
+
         img = img.to(device)
         targets = targets.to(device)
         optimizer.zero_grad()
 
         outputs = model(img)
 
-        # dict format for v8detecionloss input 
+        # dict format for v8detecionloss input
         batch = {
             "batch_idx": targets[:, 0].long(),
             "cls": targets[:, 1].long(),
@@ -120,7 +120,7 @@ def validate(loader, model, loss_fn):
             box += loss_items[0]
             cls += loss_items[1]
             dfl += loss_items[2]
-        
+
         box = box / len(loader)
         cls = cls / len(loader)
         dfl = dfl / len(loader)
@@ -135,12 +135,12 @@ EPOCHS = 500
 best_valid_loss = float('inf')
 patience = 0
 
-#training + validation loop 
-for epoch in range(EPOCHS): 
+#training + validation loop
+for epoch in range(EPOCHS):
     if patience > 10:
         print("Model not improving, ending training loop")
         break
-    # call the functions 
+    # call the functions
     t_box, t_cls, t_dfl = train_one_epoch(train_dataloader, model, optimizer, loss_fn)
     v_box, v_cls, v_dfl = validate(valid_dataloader, model, loss_fn)
 
@@ -149,7 +149,7 @@ for epoch in range(EPOCHS):
     v_loss = v_box + v_cls + v_dfl
 
     # logging values for when we make graphs (w/ tensorboard perhaps?)
-  
+
     writer.add_scalar('Loss/train/box', t_box, epoch)
     writer.add_scalar('Loss/train/cls', t_cls, epoch)
     writer.add_scalar('Loss/train/dfl', t_dfl, epoch)
@@ -157,13 +157,13 @@ for epoch in range(EPOCHS):
     writer.add_scalar('Loss/val/box', v_box, epoch)
     writer.add_scalar('Loss/val/cls', v_cls, epoch)
     writer.add_scalar('Loss/val/dfl', v_dfl, epoch)
-    
+
     writer.add_scalar('Loss/train', t_loss, epoch)
     writer.add_scalar('Loss/val', v_loss, epoch)
 
     print(f"Loss values for epoch {epoch+1}: Training: [box = {t_box:.4f}, cls = {t_cls:.4f}, dfl = {t_dfl:.4f}] | Validation: [box = {v_box:.4f}, cls = {v_cls:.4f}, dfl = {v_dfl:.4f}]\n")
 
-    if v_loss < best_valid_loss: 
+    if v_loss < best_valid_loss:
         best_valid_loss = v_loss
         patience = 0
         print("v_loss less than best_valid loss")
@@ -172,7 +172,7 @@ for epoch in range(EPOCHS):
     else:
         patience += 1
         print(f"Patience: {patience}")
- 
+
 # reconstruct yolo modelb and save it
 yolo.model = model
 yolo.save("models_trained/modelv8m.pt")
