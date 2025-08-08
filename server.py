@@ -35,7 +35,7 @@ def predict(img: Image.Image) -> tuple[float, Image.Image]:
 
     draw = ImageDraw.Draw(annotated_img)
     img_height = annotated_img.height
-    font_size = max(10, img_height // spots)
+    font_size = max(10, img_height // (spots or 1))
 
     try:
         font = ImageFont.truetype("Arial.ttf", size=font_size)
