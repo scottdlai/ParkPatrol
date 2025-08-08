@@ -1,5 +1,4 @@
 import './App.css';
-import Picture1 from '../public/assets/Picture1.png';
 
 import React, { useState } from 'react';
 
@@ -64,7 +63,8 @@ export default function App() {
 
     return (
         <div className="flex justify-center items-start min-h-screen w-screen bg-base-200 py-10 px-4 text-[#3F5371]">
-            <div className="card w-full max-w-2xl p-6 bg-white rounded-2xl shadow-xl space-y-6">
+            <div className="card w-full max-w-2xl p-6 rounded-2xl shadow-xl space-y-6"
+            style={{backgroundColor:'#3F5371'}}>
 
                 {/* Logo + Title horizontally */}
                 <div className="flex items-center space-x-4 justify-center">
@@ -72,15 +72,17 @@ export default function App() {
                         <img src="/assets/Picture1.png" alt="Logo" className="object-cover w-full h-full" />
                     </div>
                     <div>
-                        <h1 className="text-5xl font-extrabold text-primary">Park Patrol</h1>
-                        <p className="text-lg text-slate-500 text-center">Check stall occupancy with ML</p>
+                        <h1 className="text-5xl font-extrabold text-primary"
+                        style={{color:'#FFE8BF'}}>Park Patrol</h1>
+                        <p className="text-lg text-white text-center">Check stall occupancy with ML</p>
                     </div>
                 </div>
 
                 {/* Sticky File Input and Button */}
-                <div className="sticky top-0 bg-white z-10 pb-2 pt-1">
+                <div className="sticky top-0  z-10 pb-2 pt-1"
+                     style={{backgroundColor:'#3F5371'}}>
                     <fieldset className="fieldset">
-                        <legend className="fieldset-legend text-slate-500 ">Upload a bird's-eye view photo with visible parking stall lines</legend>
+                        <legend className="fieldset-legend text-grey-300 ">Upload a bird's-eye view photo with visible parking stall lines</legend>
                     <form className="flex items-center gap-3 w-full" onSubmit={handleSubmit}>
                         <input
                             id="file-upload"
@@ -92,7 +94,8 @@ export default function App() {
 
                         <button
                             type="submit"
-                            className="btn btn-sm btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="btn btn-sm disabled:opacity-50 disabled:cursor-not-allowed text-black"
+                            style={{backgroundColor:'#FFE8BF'}}
                         >
                             Find lot status
                         </button>
@@ -112,86 +115,83 @@ export default function App() {
                 )}
 
                 {/* Table + icon */}
-                {spots !== null && (
-                    <div className="flex items-stretch gap-4 overflow-x-auto rounded-box border border-base-300 bg-base-100 p-4">
-                        <table className="table table-sm table-zebra w-full max-w-[60%]">
-                            <thead>
-                            <tr className="text-base-content">
-                                <th>Category</th>
-                                <th>Count</th>
-                                <th>Percentage</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {vacants !== null && (
-                                <tr>
-                                    <td>Vacant</td>
-                                    <td>{vacants}/{spots}</td>
-                                    <td>{spots > 0 ? `${((vacants / spots) * 100).toFixed(1)}%` : '—'}</td>
-                                </tr>
-                            )}
-                            {occupieds !== null && (
-                                <tr>
-                                    <td>Occupied</td>
-                                    <td>{occupieds}/{spots}</td>
-                                    <td>{spots > 0 ? `${((occupieds / spots) * 100).toFixed(1)}%` : '—'}</td>
-                                </tr>
-                            )}
-                            </tbody>
-                        </table>
+                {spots !== null && (() => {
+                    // Calculate all values upfront
+                    const totalSpots = spots;
+                    const vacantCount = vacants ?? 0;
+                    const occupiedCount = occupieds ?? 0;
+                    const vacancyRate = totalSpots > 0 ? vacantCount / totalSpots : 0;
 
-                        {/* Divider */}
-                        <div className="border-l border-gray-300"></div>
+                    // Determine status once
+                    let status, statusClass, statusImage, statusText;
 
-                        {/* Centered caption container */}
-                        {/* Avatar + Text Container - Fixed Centering */}
-                        <div className="flex flex-col justify-center items-center w-24 min-h-full px-2">
-                            <div className="flex flex-col items-center justify-center gap-1 h-full">
-                                <div className="avatar">
-                                    <div className="w-16 rounded-full">
-                                        {vacants === 0 ? (
+                    if (vacancyRate <= 0.15) {
+                        status = 'critical';
+                        statusClass = 'text-red-400';
+                        statusImage = '/assets/sad_rat.jpg';
+                        statusText = 'Almost or already full!';
+                    } else if (vacancyRate <= 0.3) {
+                        status = 'limited';
+                        statusClass = 'text-amber-400';
+                        statusImage = '/assets/unsure_rat.jpg';
+                        statusText = 'Limited spaces';
+                    } else if (vacancyRate > 0.5) {
+                        status = 'plenty';
+                        statusClass = 'text-green-400';
+                        statusImage = '/assets/smirk_rat.jpg';
+                        statusText = 'Plenty available!';
+                    } else {
+                        status = 'moderate';
+                        statusClass = 'text-blue-400';
+                        statusImage = '/assets/happy_rat.jpg';
+                        statusText = 'Moderate spaces';
+                    }
+
+                    return (
+                        <div className="flex items-stretch gap-4 overflow-x-auto rounded-box border border-base-300 bg-base-100 p-4">
+                            <table className="table table-sm w-full max-w-[60%]">
+                                <thead>
+                                <tr className="text-base-content" style={{color:'#FFE8BF'}}>
+                                    <th>Category</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                </tr>
+                                </thead>
+                                <tbody className="text-white">
+                                <tr>
+                                    <td className="text-green-500 italic">Vacant</td>
+                                    <td>{vacantCount}/{totalSpots}</td>
+                                    <td>{totalSpots > 0 ? `${(vacancyRate * 100).toFixed(1)}%` : '—'}</td>
+                                </tr>
+                                <tr>
+                                    <td className="text-red-500 italic">Occupied</td>
+                                    <td>{occupiedCount}/{totalSpots}</td>
+                                    <td>{totalSpots > 0 ? `${((occupiedCount / totalSpots) * 100).toFixed(1)}%` : '—'}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+                            <div className="border-l border-gray-300"></div>
+
+                            <div className="flex flex-col justify-center items-center w-24 min-h-full px-2">
+                                <div className="flex flex-col items-center justify-center gap-1 h-full">
+                                    <div className="avatar">
+                                        <div className="w-16 rounded-full">
                                             <img
-                                                src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp"
+                                                src={statusImage}
                                                 className="object-cover"
-                                                alt="Full parking"
+                                                alt={`Parking status: ${status}`}
                                             />
-                                        ) : occupieds === 0 ? (
-                                            <img
-                                                src="https://img.daisyui.com/images/profile/demo/spiderperson@192.webp"
-                                                className="object-cover"
-                                                alt="Empty parking"
-                                            />
-                                        ) : (vacants / spots) > 0.5 ? (
-                                            <img
-                                                src="https://img.daisyui.com/images/profile/demo/yellingwoman@192.webp"
-                                                className="object-cover"
-                                                alt="Many spaces"
-                                            />
-                                        ) : (
-                                            <img
-                                                src="https://img.daisyui.com/images/profile/demo/batperson@192.webp"
-                                                className="object-cover"
-                                                alt="Few spaces"
-                                            />
-                                        )}
+                                        </div>
                                     </div>
+                                    <span className={`text-sm text-center w-full ${statusClass}`}>
+            {statusText}
+          </span>
                                 </div>
-                                <span className="text-sm font-medium text-center w-full">
-          {(vacants / spots) <= 0.1 ? (
-              "Almost or already full!"
-          ) : (vacants / spots) <= 0.3 ? (
-              "Limited spaces"
-          ) : (vacants / spots) > 0.5 ? (
-              "Plenty of spaces!"
-          ) : (
-              "Moderate availability"
-          )}
-        </span>
                             </div>
                         </div>
-
-                    </div>
-                )}
+                    );
+                })()}
 
             </div>
         </div>
