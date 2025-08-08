@@ -3,13 +3,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 import base64
 import json
+import os
 
 from PIL import Image, ImageDraw, ImageFont
 from ultralytics import YOLO
 
 
 model = YOLO('models_trained/modelv8m.pt')
-PORT = 8000
+PORT = int(os.getenv("PORT") or "8000")
 UNOCCUPIED_CLASS_ID = 1
 
 def predict(img: Image.Image) -> tuple[float, Image.Image]:
@@ -37,11 +38,11 @@ def predict(img: Image.Image) -> tuple[float, Image.Image]:
     draw = ImageDraw.Draw(annotated_img)
 
     try:
-        font = ImageFont.truetype("arial.ttf", size=96)
-        print("im here")
+        font = ImageFont.truetype("Arial.ttf", size=96)
+        print("using arial.ttf with size 96")
     except:
         font = ImageFont.load_default(size=48)
-        print("im except")
+        print("using default font")
 
     for box in boxes:
         cls_id = int(box.cls[0])
