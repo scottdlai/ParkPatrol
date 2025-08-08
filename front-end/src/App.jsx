@@ -1,4 +1,5 @@
 import './App.css';
+import Picture1 from '../public/assets/Picture1.png';
 
 import React, { useState } from 'react';
 
@@ -62,62 +63,136 @@ export default function App() {
     };
 
     return (
-        <div className="flex justify-center items-center w-screen bg-zinc-50 h-svh">
-            <div className="align-super w-1/2 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white max-h-full">
-                <h1 className="text-xl font-bold text-center">Paw Patrol</h1>
+        <div className="flex justify-center items-start min-h-screen w-screen bg-base-200 py-10 px-4 text-[#3F5371]">
+            <div className="card w-full max-w-2xl p-6 bg-white rounded-2xl shadow-xl space-y-6">
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-y-4 w-full">
-                    <input
-                        id="file-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                    />
+                {/* Logo + Title horizontally */}
+                <div className="flex items-center space-x-4 justify-center">
+                    <div className="w-22 h-22 rounded-full overflow-hidden">
+                        <img src="/assets/Picture1.png" alt="Logo" className="object-cover w-full h-full" />
+                    </div>
+                    <div>
+                        <h1 className="text-5xl font-extrabold text-primary">Park Patrol</h1>
+                        <p className="text-lg text-slate-500 text-center">Check stall occupancy with ML</p>
+                    </div>
+                </div>
 
-                    <label
-                        htmlFor="file-upload"
-                        className="block w-full px-4 py-2 text-center bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200 font-medium"
-                    >
-                        {file ? 'Change Image' : 'Upload Image'}
-                    </label>
+                {/* Sticky File Input and Button */}
+                <div className="sticky top-0 bg-white z-10 pb-2 pt-1">
+                    <fieldset className="fieldset">
+                        <legend className="fieldset-legend text-slate-500 ">Upload a bird's-eye view photo with visible parking stall lines</legend>
+                    <form className="flex items-center gap-3 w-full" onSubmit={handleSubmit}>
+                        <input
+                            id="file-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="file-input file-input-bordered file-input-sm w-full"
+                        />
 
-                    {imagePreview && (
-                        <div className="flex justify-center" style={{maxHeight: '78svh'}}>
-                          <img
+                        <button
+                            type="submit"
+                            className="btn btn-sm btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Find lot status
+                        </button>
+                    </form>
+                    </fieldset>
+                </div>
+
+                {/* Image preview section */}
+                {imagePreview && (
+                    <div className="bg-base-100 p-2 rounded-lg border shadow-md max-h-[60svh] overflow-auto flex justify-center">
+                        <img
                             src={imagePreview}
                             alt="Selected"
-                            className="rounded shadow"
-                          />
-                        </div>
-                    )}
+                            className="rounded object-contain max-h-full"
+                        />
+                    </div>
+                )}
 
-                    <button
-                        type="submit"
-                        disabled={loading || !file}
-                        className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700"
-                    >
-                        {loading ? 'Analyzing...' : 'Submit'}
-                    </button>
-                </form>
-
+                {/* Table + icon */}
                 {spots !== null && (
-                    <div className="text-center text-lg">
-                        Number of spots: {spots}
+                    <div className="flex items-stretch gap-4 overflow-x-auto rounded-box border border-base-300 bg-base-100 p-4">
+                        <table className="table table-sm table-zebra w-full max-w-[60%]">
+                            <thead>
+                            <tr className="text-base-content">
+                                <th>Category</th>
+                                <th>Count</th>
+                                <th>Percentage</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {vacants !== null && (
+                                <tr>
+                                    <td>Vacant</td>
+                                    <td>{vacants}/{spots}</td>
+                                    <td>{spots > 0 ? `${((vacants / spots) * 100).toFixed(1)}%` : '—'}</td>
+                                </tr>
+                            )}
+                            {occupieds !== null && (
+                                <tr>
+                                    <td>Occupied</td>
+                                    <td>{occupieds}/{spots}</td>
+                                    <td>{spots > 0 ? `${((occupieds / spots) * 100).toFixed(1)}%` : '—'}</td>
+                                </tr>
+                            )}
+                            </tbody>
+                        </table>
+
+                        {/* Divider */}
+                        <div className="border-l border-gray-300"></div>
+
+                        {/* Centered caption container */}
+                        {/* Avatar + Text Container - Fixed Centering */}
+                        <div className="flex flex-col justify-center items-center w-24 min-h-full px-2">
+                            <div className="flex flex-col items-center justify-center gap-1 h-full">
+                                <div className="avatar">
+                                    <div className="w-16 rounded-full">
+                                        {vacants === 0 ? (
+                                            <img
+                                                src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp"
+                                                className="object-cover"
+                                                alt="Full parking"
+                                            />
+                                        ) : occupieds === 0 ? (
+                                            <img
+                                                src="https://img.daisyui.com/images/profile/demo/spiderperson@192.webp"
+                                                className="object-cover"
+                                                alt="Empty parking"
+                                            />
+                                        ) : (vacants / spots) > 0.5 ? (
+                                            <img
+                                                src="https://img.daisyui.com/images/profile/demo/yellingwoman@192.webp"
+                                                className="object-cover"
+                                                alt="Many spaces"
+                                            />
+                                        ) : (
+                                            <img
+                                                src="https://img.daisyui.com/images/profile/demo/batperson@192.webp"
+                                                className="object-cover"
+                                                alt="Few spaces"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                                <span className="text-sm font-medium text-center w-full">
+          {(vacants / spots) <= 0.1 ? (
+              "Almost or already full!"
+          ) : (vacants / spots) <= 0.3 ? (
+              "Limited spaces"
+          ) : (vacants / spots) > 0.5 ? (
+              "Plenty of spaces!"
+          ) : (
+              "Moderate availability"
+          )}
+        </span>
+                            </div>
+                        </div>
+
                     </div>
                 )}
 
-                {vacants !== null && (
-                    <div className="text-center text-lg">
-                        Number of vacants: {vacants}
-                    </div>
-                )}
-
-                {occupieds !== null && (
-                    <div className="text-center text-lg">
-                        Number of occupieds: {occupieds}
-                    </div>
-                )}
             </div>
         </div>
     );
