@@ -37,7 +37,7 @@ def predict(img: Image.Image) -> tuple[float, Image.Image]:
     draw = ImageDraw.Draw(annotated_img)
 
     try:
-        font = ImageFont.truetype("arial.ttf", size=96)
+        font = ImageFont.truetype("arial.ttf", size=26)
         print("im here")
     except:
         font = ImageFont.load_default(size=48)

@@ -62,11 +62,11 @@ export default function App() {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen w-screen bg-zinc-50">
-            <div className="align-super w-1/2 min-h-80 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white">
+        <div className="flex justify-center items-center w-screen bg-zinc-50 h-svh">
+            <div className="align-super w-1/2 mx-auto p-4 border rounded-xl shadow space-y-4 bg-white max-h-full">
                 <h1 className="text-xl font-bold text-center">Paw Patrol</h1>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-y-4 w-full">
                     <input
                         id="file-upload"
                         type="file"
@@ -83,11 +83,13 @@ export default function App() {
                     </label>
 
                     {imagePreview && (
-                        <img
+                        <div className="flex justify-center" style={{maxHeight: '78svh'}}>
+                          <img
                             src={imagePreview}
                             alt="Selected"
-                            className="w-full h-auto rounded shadow"
-                        />
+                            className="rounded shadow"
+                          />
+                        </div>
                     )}
 
                     <button
