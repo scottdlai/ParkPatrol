@@ -1,4 +1,4 @@
-# Welcome to PawPatrol
+# Welcome to ParkPatrol
 
 ### Setup
 
