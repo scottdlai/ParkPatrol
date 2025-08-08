@@ -25,8 +25,6 @@ def predict(img: Image.Image) -> tuple[float, Image.Image]:
     )
 
     boxes = results[0].boxes
-    probs = [float(box.conf) for box in boxes]
-    occupied_prob = sum(probs) / len(probs) if probs else 0.0
 
     annotated_img = img.copy()
     draw = ImageDraw.Draw(annotated_img)
@@ -64,7 +62,7 @@ def predict(img: Image.Image) -> tuple[float, Image.Image]:
 
     stats = { "spots": spots, "vacants": vacants, "occupieds": occupieds }
 
-    return (occupied_prob, annotated_img, stats)
+    return (annotated_img, stats)
 
 
 class ParkPatrolHandler(BaseHTTPRequestHandler):
@@ -104,9 +102,7 @@ class ParkPatrolHandler(BaseHTTPRequestHandler):
 
             print(f'Calling API with img {img}')
 
-            (probability, annotated_img, stats) = predict(img)
-
-            print(f'Occupied Probability: {probability}')
+            (annotated_img, stats) = predict(img)
 
             # Convert image to base64-encoded PNG
             buf = BytesIO()
@@ -115,7 +111,6 @@ class ParkPatrolHandler(BaseHTTPRequestHandler):
             data_url = f"data:image/png;base64,{img_base64}"
 
             response = {
-                'occupiedProbability': probability,
                 'img': data_url,
                 'stats': stats,
             }
