@@ -35,3 +35,15 @@ npm run dev
 ```
 
 Your web application will be running on port `5173`.
+
+**Alternatively**, if you can use `docker-compose` to run the whole project:
+
+```sh
+docker-compose up
+```
+
+To stop the application, just run:
+
+```sh
+docker-compose down
+```

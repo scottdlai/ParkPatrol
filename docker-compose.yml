@@ -1,0 +1,20 @@
+services:
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile.backend
+        image: park-patrol-backend:latest
+        ports:
+            - '8000:8000'
+        environment:
+            - PORT=8000
+        restart: unless-stopped
+
+    frontend:
+        build:
+            context: .
+            dockerfile: Dockerfile.frontend
+        image: park-patrol-frontend:latest
+        ports:
+            - '5173:5173'
+        restart: unless-stopped
