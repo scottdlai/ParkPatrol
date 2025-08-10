@@ -1,3 +1,6 @@
+# Adapted from https://docs.pytorch.org/tutorials/beginner/introyt/trainingyt.html
+# Modified to support YOLO model training 
+
 from ultralytics import YOLO
 from ultralytics.utils.loss import v8DetectionLoss
 from ultralytics.utils import SETTINGS
@@ -84,20 +87,16 @@ def train_one_epoch(loader, model, optimizer, loss_fn):
 
         optimizer.step()
 
-        #print(f"batch {i} loss:")
-        #tb_x = epoch_index * len(training_loader) + i + 1
-        #tb_writer.add_scalar('Loss/train', running_loss, tb_x)
         box += loss_items[0]
         cls += loss_items[1]
         dfl += loss_items[2]
 
-       # print(f"box: {loss_items[0]:.4f}, cls: {loss_items[1]:.4f}, dfl: {loss_items[2]:.4f}")
         i += 1
 
     box = box / len(loader)
     cls = cls / len(loader)
     dfl = dfl / len(loader)
-   # print(f"final training loss: box: {box:.4f}, cls: {cls:.4f}, dfl: {dfl:.4f}")
+
     return box, cls, dfl
 
 def validate(loader, model, loss_fn):
@@ -107,6 +106,7 @@ def validate(loader, model, loss_fn):
     model.eval()
     with torch.no_grad():
         for img, targets in loader:
+           
             img = img.to(device)
             targets = targets.to(device)
             outputs = model(img)
@@ -124,7 +124,7 @@ def validate(loader, model, loss_fn):
         box = box / len(loader)
         cls = cls / len(loader)
         dfl = dfl / len(loader)
-      #  print(f"final training loss: box: {box:.4f}, cls: {cls:.4f}, dfl: {dfl:.4f}")
+        
         return box, cls, dfl
 
 timestamp = dt.datetime.now().strftime('%Y%m%d_%H%M%S')

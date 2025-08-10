@@ -14,7 +14,6 @@ class ParkingDataset(Dataset):
         self.class_names = ['Occupied', 'Vacant']
         self.num_classes = len(self.class_names)
         self.class_dict = {i: name for i, name in enumerate(self.class_names)}
-
     
     def __len__(self):
         return len(self.images)
