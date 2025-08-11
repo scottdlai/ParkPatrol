@@ -22,16 +22,17 @@ deprecated warning for usage of `cgi`.
 
 ## Setup
 
-#### 1. Install python dependencies:
+#### 1. Install python dependencies in `./project`:
 
 ```sh
+# Navigate to ./project
 pip install -r requirements.txt
 ```
 
-#### 2. Install front-end dependencies:
+#### 2. Install front-end dependencies in `./project/front-end`:
 
 ```sh
-cd front-end
+# Navigate to ./project/front-end
 npm i
 ```
 
@@ -41,18 +42,23 @@ You can run the full application either locally or using Docker.
 
 ### Option 1: Running the Application Locally
 
-#### 1. Start the backend python server:
+#### 1. Start the backend python server `./project`:
+
+In one terminal, run the python server.
 
 ```sh
+# Navigate to ./project
 python server.py
 ```
 
 You will have a web server running on port `8000`.
 
-#### 2. Start the web application in `./front-end`:
+#### 2. Start the web application in `./project/front-end`:
+
+In another terminal, start the web application.
 
 ``` sh
-cd front-end
+# Navigate to ./project/front-end
 npm run dev
 ```
 Your web application will be running on port `5173`.
@@ -61,9 +67,9 @@ Your web application will be running on port `5173`.
 
 1. Open your browser and go to http://localhost:5173
 2. Click Browse in the file input.
-3. Select a parking lot image.
+3. Select a parking lot image from your local device.
     Test images are available in ./data/images/test/
-4. Click Submit.
+4. Click "Find lot status".
 
 The application will display:
 - An annotated image with detected stalls marked and labeled.
