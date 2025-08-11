@@ -22,17 +22,17 @@ deprecated warning for usage of `cgi`.
 
 ## Setup
 
-#### 1. Install python dependencies in `./project`:
+#### 1. Install python dependencies in `./`:
 
 ```sh
-# Navigate to ./project
+# Navigate to ./
 pip install -r requirements.txt
 ```
 
-#### 2. Install front-end dependencies in `./project/front-end`:
+#### 2. Install front-end dependencies in `./front-end`:
 
 ```sh
-# Navigate to ./project/front-end
+# Navigate to ./front-end
 npm i
 ```
 
@@ -42,23 +42,23 @@ You can run the full application either locally or using Docker.
 
 ### Option 1: Running the Application Locally
 
-#### 1. Start the backend python server `./project`:
+#### 1. Start the backend python server `./`:
 
 In one terminal, run the python server.
 
 ```sh
-# Navigate to ./project
+# Navigate to ./
 python server.py
 ```
 
 You will have a web server running on port `8000`.
 
-#### 2. Start the web application in `./project/front-end`:
+#### 2. Start the web application in `./front-end`:
 
 In another terminal, start the web application.
 
 ``` sh
-# Navigate to ./project/front-end
+# Navigate to ./front-end
 npm run dev
 ```
 Your web application will be running on port `5173`.
